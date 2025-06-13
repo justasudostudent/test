@@ -3,6 +3,7 @@ import sqlite3
 import pickle
 import subprocess
 from flask import Flask, request, make_response
+import json
 
 app = Flask(__name__)
 
@@ -38,10 +39,13 @@ def upload():
 
 # Vulnérabilité 4 : Désérialisation non sécurisée
 @app.route('/deserialize', methods=['POST'])
-def deserialize():
-    data = request.data
-    obj = pickle.loads(data)  # ⚠️ Très dangereux si data provient d'un client
-    return f"Deserialized: {obj}"
+def safe_deserialize():
+    try:
+        data = request.get_data()
+        obj = json.loads(data)
+        return f"Deserialized (safely): {obj}"
+    except json.JSONDecodeError:
+        return "Invalid JSON", 400
 
 # Vulnérabilité 5 : Cross-Site Scripting (XSS)
 @app.route('/xss')
